@@ -2,7 +2,9 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-from ..mailing.service import prepare_post, send_book
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from ..mailing.service import prepare_post
+from ..mailing.jobs import start_mailing_job, get_job
 
 router = APIRouter()
 
@@ -81,7 +83,7 @@ def send_submit(
         if action == "preview":
             return templates.TemplateResponse(request, "campaign.html", ctx)
 
-        report = send_book(
+        job_id = start_mailing_job(
             author_name=author_name,
             book_title=book_title,
             age_rating=age_rating,
@@ -91,7 +93,37 @@ def send_submit(
             day=day,
             attachment=attachment.strip() or None,
         )
-        ctx["report_path"] = str(report)
+        return RedirectResponse(f"/send/progress/{job_id}", status_code=303)
     except Exception as exc:
         ctx["error"] = str(exc)
-    return templates.TemplateResponse(request, "campaign.html", ctx)
+        return templates.TemplateResponse(request, "campaign.html", ctx)
+
+
+
+@router.get("/send/progress/{job_id}")
+def send_progress(request: Request, job_id: str):
+    if not get_job(job_id):
+        return HTMLResponse("Задача не найдена", status_code=404)
+    return templates.TemplateResponse(request, "progress.html", {"job_id": job_id})
+
+
+@router.get("/send/status/{job_id}")
+def send_status(job_id: str):
+    job = get_job(job_id)
+    if not job:
+        return {"ok": 0, "err": 0, "processed": 0, "total": 0, "done": True, "failed": True, "message": "Задача не найдена", "current": ""}
+    return job
+
+@router.get("/send/report/{job_id}")
+def send_report(job_id: str):
+    job = get_job(job_id)
+    if not job or not job.get("report_name"):
+        return HTMLResponse("Отчёт ещё не готов", status_code=404)
+    path = Path("group_target") / job["report_name"]
+    if not path.exists():
+        return HTMLResponse("Файл отчёта не найден", status_code=404)
+    return FileResponse(
+        path,
+        filename=job["report_name"],
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
