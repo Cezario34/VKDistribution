@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Рассылка{% endblock %}
+{% block content %}
+  <h1>Новая рассылка</h1>
+  <p>Поля уходят в prepare_post и run_mailing.</p>
+
+  {% if error %}<div class="note bad">{{ error }}</div>{% endif %}
+  {% if report_path %}<div class="note ok">Готово. Отчёт: {{ report_path }}</div>{% endif %}
+
+  <form method="post" action="/send">
+    <label>Имя автора
+      <input name="author_name" required value="{{ values.author_name or '' }}" />
+    </label>
+    <label>Название книги
+      <input name="book_title" required value="{{ values.book_title or '' }}" />
+    </label>
+    <label>Ценз
+      <input name="age_rating" required placeholder="16+" value="{{ values.age_rating or '' }}" />
+    </label>
+    <label>Аннотация
+      <textarea name="annotation" rows="10" required>{{ values.annotation or '' }}</textarea>
+    </label>
+    <label>Ссылки на книгу
+      <textarea name="book_links" rows="3" required>{{ values.book_links or '' }}</textarea>
+    </label>
+    <label>День
+      <select name="day">
+        {% for value, title in days %}
+          <option value="{{ value }}" {% if values.day is not none and values.day|int == value %}selected{% endif %}>{{ title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Обложка VK
+      <input name="attachment" placeholder="photo-123_456" value="{{ values.attachment or '' }}" />
+    </label>
+    <label>Токен VK
+      <input name="token" type="password" required autocomplete="off" />
+    </label>
+    <div class="row">
+      <button type="submit" name="action" value="preview">Показать текст</button>
+      <button type="submit" name="action" value="send">Отправить</button>
+    </div>
+  </form>
+
+  {% if preview %}
+    <h2>Текст поста</h2>
+    <pre>{{ preview }}</pre>
+  {% endif %}
+{% endblock %}
