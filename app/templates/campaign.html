@@ -1,49 +1,38 @@
-{% extends "base.html" %}
-{% block title %}Рассылка{% endblock %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Рассылка</title>
+  <style>
+    body { font-family: sans-serif; max-width: 720px; margin: 30px auto; }
+    label { display: block; margin-top: 12px; }
+    input, textarea, select { width: 100%; padding: 8px; }
+    button { margin: 16px 8px 0 0; padding: 10px 14px; }
+    .err { color: #b00; } .ok { color: #070; }
+    pre { background: #111; color: #eee; padding: 12px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
   <h1>Новая рассылка</h1>
-  <p>Поля уходят в prepare_post и run_mailing.</p>
-
-  {% if error %}<div class="note bad">{{ error }}</div>{% endif %}
-  {% if report_path %}<div class="note ok">Готово. Отчёт: {{ report_path }}</div>{% endif %}
-
+  {% if error %}<p class="err">{{ error }}</p>{% endif %}
+  {% if report_path %}<p class="ok">Готово. Отчёт: {{ report_path }}</p>{% endif %}
   <form method="post" action="/send">
-    <label>Имя автора
-      <input name="author_name" required value="{{ values.author_name or '' }}" />
-    </label>
-    <label>Название книги
-      <input name="book_title" required value="{{ values.book_title or '' }}" />
-    </label>
-    <label>Ценз
-      <input name="age_rating" required placeholder="16+" value="{{ values.age_rating or '' }}" />
-    </label>
-    <label>Аннотация
-      <textarea name="annotation" rows="10" required>{{ values.annotation or '' }}</textarea>
-    </label>
-    <label>Ссылки на книгу
-      <textarea name="book_links" rows="3" required>{{ values.book_links or '' }}</textarea>
-    </label>
+    <label>Имя автора <input name="author_name" required value="{{ values.author_name or '' }}"></label>
+    <label>Название книги <input name="book_title" required value="{{ values.book_title or '' }}"></label>
+    <label>Ценз <input name="age_rating" required value="{{ values.age_rating or '' }}"></label>
+    <label>Аннотация <textarea name="annotation" rows="10" required>{{ values.annotation or '' }}</textarea></label>
+    <label>Ссылки на книгу <textarea name="book_links" rows="3" required>{{ values.book_links or '' }}</textarea></label>
     <label>День
       <select name="day">
         {% for value, title in days %}
-          <option value="{{ value }}" {% if values.day is not none and values.day|int == value %}selected{% endif %}>{{ title }}</option>
-        {% endfor %}
+<option value="{{ value }}" {% if values.get('day', 0)|int == value %}selected{% endif %}>{{ title }}</option>        {% endfor %}
       </select>
     </label>
-    <label>Обложка VK
-      <input name="attachment" placeholder="photo-123_456" value="{{ values.attachment or '' }}" />
-    </label>
-    <label>Токен VK
-      <input name="token" type="password" required autocomplete="off" />
-    </label>
-    <div class="row">
-      <button type="submit" name="action" value="preview">Показать текст</button>
-      <button type="submit" name="action" value="send">Отправить</button>
-    </div>
+    <label>Обложка VK <input name="attachment" value="{{ values.attachment or '' }}"></label>
+    <label>Токен VK <input name="token" type="password" required></label>
+    <button type="submit" name="action" value="preview">Показать текст</button>
+    <button type="submit" name="action" value="send">Отправить</button>
   </form>
-
-  {% if preview %}
-    <h2>Текст поста</h2>
-    <pre>{{ preview }}</pre>
-  {% endif %}
-{% endblock %}
+  {% if preview %}<h2>Текст поста</h2><pre>{{ preview }}</pre>{% endif %}
+</body>
+</html>
